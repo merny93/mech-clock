@@ -9,17 +9,35 @@
 
 Clock clock;
 
-void setup() {
+void setup()
+{
+  //DEBUG
   Serial.begin(9600);
-    // stepperX.begin(MOTOR_TARGET_RPM, MICROSTEPS);
-    // stepperA.begin(MOTOR_TARGET_RPM, MICROSTEPS);
 
-    // stepperA.setSpeedProfile(stepperA.LINEAR_SPEED, MOTOR_ACCEL, MOTOR_DECEL);
-    // stepperX.setSpeedProfile(stepperX.LINEAR_SPEED, MOTOR_ACCEL, MOTOR_DECEL);
-    clock.setup();
-    clock.zero();
-    // clock.go_rel(0.0, 10.0);
-    // clock.go_pos(0.0,20.0, true );
+  clock.setup();
+  bool failed = true;
+  for (int n_tries = 0; n_tries < 3; n_tries++)
+  {
+    if (clock.zero()){
+      failed = false;
+      break;
+    }
+  }
+  if (failed){
+    Serial.println("Failed to zero, hanging");
+    clock.controller.disable();
+    while(true){};
+  }
+  clock.zero_display();
+  Serial.println(clock._a_pos);
+  Serial.println(clock._x_pos);
+
+  // clock.go_x(5.0);
+  // clock.go_x(0.0);
+  // clock.go_a(180.0, true);
+  // clock.go_a(0.0, false);
+  // clock.go_pos(15.0, clock._a_pos, false);
+  
 }
 int i = 0;
 void loop() {

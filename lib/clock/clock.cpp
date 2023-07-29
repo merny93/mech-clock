@@ -1,5 +1,6 @@
 #include <clock.h>
 
+
 Clock::Clock()
 :   stepperX(STEP_PER_REV, X_DIR_PIN,  X_STEP_PIN, ENABLE_PIN), 
     stepperA(STEP_PER_REV, A_DIR_PIN,  A_STEP_PIN, ENABLE_PIN),
@@ -58,7 +59,7 @@ void Clock::go_rel(double x_rel, double a_rel){
     controller.enable();
     controller.rotate(-x_rel_d + a_rel, a_rel);
     controller.disable();
-    _x_pos += x_rel_d;
+    _x_pos += x_rel;
     _a_pos = fmod(_a_pos + a_rel + 360, 360);
     
 }
@@ -76,8 +77,8 @@ bool Clock::zero(){
     /* Function to zero out the clock*/
     
     //set to slow for zeroing
-    stepperX.begin(MOTOR_TARGET_RPM/10, MICROSTEPS);
-    stepperA.begin(MOTOR_TARGET_RPM/10, MICROSTEPS);
+    stepperX.begin(MOTOR_TARGET_RPM/3, MICROSTEPS);
+    stepperA.begin(MOTOR_TARGET_RPM/3, MICROSTEPS);
 
     stepperA.setSpeedProfile(stepperA.LINEAR_SPEED, MOTOR_ACCEL, 0);
     stepperX.setSpeedProfile(stepperX.LINEAR_SPEED, MOTOR_ACCEL, 0);
@@ -88,10 +89,12 @@ bool Clock::zero(){
 
     //if already touching move out a little
     if (digitalRead(A_LIMIT_PIN) == LOW){
+        Serial.println("A limit already pressed, moving off");
         controller.rotate(-15.0, -15.0);
         delay(100);
         //if its still touching it failed 
         if (digitalRead(A_LIMIT_PIN) == LOW){
+            Serial.println("A limit still pressed, failed");
             return false;
         }
     }
@@ -107,6 +110,7 @@ bool Clock::zero(){
         wait_time_micros = controller.nextAction();
     }
     if (fail){
+        Serial.println("A limit not pressed, failed");
         return false;
     }
 
@@ -119,10 +123,12 @@ bool Clock::zero(){
 
     //check if already touching
     if (digitalRead(X_LIMIT_PIN) == LOW){
-        controller.rotate(-10.0,0.0);
+        Serial.println("X limit already pressed, moving off");
+        controller.rotate(-100.0,0.0);
         delay(100);
         //if its still touching it failed 
         if (digitalRead(X_LIMIT_PIN) == LOW){
+            Serial.println("X limit still pressed, failed");
             return false;
         }
     }
@@ -143,6 +149,7 @@ bool Clock::zero(){
         wait_time_micros = controller.nextAction();
     }
     if (fail){
+        Serial.println("X limit not pressed, failed");
         return false;
     }
 
@@ -150,8 +157,40 @@ bool Clock::zero(){
 
     setup();
 
-    go_rel(5.0,25.0);
+    go_rel(X_RESTING_POS, A_RESTING_POS);
 
     return true;    
 }
 
+void Clock::zero_display(){
+    for (int wheel_n = 0; wheel_n < WHEELS_N; wheel_n++)
+    {
+        go_x(WHEELS_POS[wheel_n]);
+        go_a(180 - BUMP_OFFSET, true);
+        go_a(180 + BUMP_OFFSET, false);
+        go_a(A_RESTING_POS, true);
+    }
+}
+
+void Clock::set_display(int* new_display, int* prev_display){ 
+    for (int wheel_n = 0; wheel_n < WHEELS_N; wheel_n++)
+    {
+        int new_digit =  new_display[wheel_n/WHEELS_PER_DIGIT];
+        int old_digit =  prev_display[wheel_n/WHEELS_PER_DIGIT];
+
+        //switch into coordinates
+        float new_pos = DIGIT_MAP[new_digit][wheel_n%WHEELS_PER_DIGIT];
+        float old_pos = DIGIT_MAP[old_digit][wheel_n%WHEELS_PER_DIGIT];
+        
+        if (new_pos == old_pos){
+            continue;
+        }
+
+        //ok actually something to do!
+        
+    }
+
+    
+
+
+}
