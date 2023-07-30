@@ -187,10 +187,17 @@ void Clock::set_display(int* new_display, int* prev_display){
         }
 
         //ok actually something to do!
-        
+        go_x(WHEELS_POS[wheel_n]);
+
+        int dir = -1;
+        if (new_pos > old_pos){
+            dir = 1;
+        }
+
+        //push it and return to resting position
+        go_a(new_pos + (dir * BUMP_OFFSET), dir == 1 );
+        go_a(A_RESTING_POS, !(dir == 1));
     }
-
-    
-
-
+    //return home
+    go_x(X_RESTING_POS);
 }
